@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <title>Responsive Admin Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- Font Awesome Icons CDN -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --sidebar-width: 250px;
+      --sidebar-collapsed-width: 80px;
+      --navbar-height: 56px;
+      --footer-height: 40px;
+    }
+    body, html {
+      height: 100%;
+      margin: 0;
+      font-family: 'Arial', sans-serif;
+      background: #f8f9fa;
+      overflow: hidden;
+    }
+    .wrapper {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    .navbar {
+      background: #ffffff;
+      border-bottom: 1px solid #dee2e6;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1030;
+      height: var(--navbar-height);
+    }
+    .content {
+      display: flex;
+      flex: 1;
+      margin-top: var(--navbar-height);
+      overflow: hidden;
+    }
+    .sidebar {
+      width: var(--sidebar-width);
+      background: #343a40;
+      color: white;
+      transition: width 0.3s;
+      position: fixed;
+      top: var(--navbar-height);
+      bottom: var(--footer-height);
+      overflow-y: auto;
+      z-index: 1020;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .sidebar.collapsed {
+      width: var(--sidebar-collapsed-width);
+    }
+    .sidebar .nav-link {
+      color: white;
+      padding: 15px;
+      font-size: 16px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 100%;
+      text-align: left;
+    }
+    .sidebar.collapsed .nav-link span {
+      display: none;
+    }
+    .sidebar.collapsed .nav-link {
+      text-align: center;
+      padding: 10px 0;
+    }
+    .toggle-btn {
+      position: absolute;
+      right: -15px;
+      top: 10px;
+      background:black;
+      border: 1px solid white;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 1050;
+    }
+    .main {
+      margin-left: var(--sidebar-width);
+      padding: 20px;
+      flex-grow: 1;
+      overflow-y: auto;
+      height: calc(100vh - var(--navbar-height) - var(--footer-height));
+      transition: margin-left 0.3s;
+    }
+    .sidebar.collapsed + .main {
+      margin-left: var(--sidebar-collapsed-width);
+    }
+    footer {
+      background: #fff;
+      border-top: 1px solid #dee2e6;
+      padding: 10px;
+      text-align: center;
+      font-size: 14px;
+      color: #6c757d;
+      height: var(--footer-height);
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 1030;
+    }
+    .kpi-card {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+    .sidebar .theme-toggle {
+      margin-top: 20px;
+      margin-bottom: 20px;
+    }
+    .sidebar .nav {
+      flex-grow: 1;
+      width: 100%;
+    }
+    .sidebar .nav-bottom {
+      margin-top: auto;
+      width: 100%;
+    }
+    .sidebar .nav-link i {
+      margin-right: 10px;
+    }
+    .sidebar.collapsed .nav-link i {
+      margin-right: 0;
+    }
+    .sidebar.collapsed .nav-link {
+      justify-content: center;
+    }
+    .sidebar .nav-link {
+      display: flex;
+      align-items: center;
+    }
+/* Sidebar Container */
+#sidebar {
+  height: 100vh;  /* Ensure the sidebar takes the full height of the screen */
+  overflow-y: auto; /* Enable vertical scrolling if content overflows */
+}
+/* Custom scrollbar styling */
+#sidebar::-webkit-scrollbar {
+  width: 8px;
+}
+#sidebar::-webkit-scrollbar-thumb {
+  background: #007bff;
+  border-radius: 4px;
+}
+#sidebar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+/* Dark Theme */
+.dark-mode {
+  background-color: #121212;
+  color: #f1f1f1;
+}
+.dark-mode .card {
+  background-color: #1e1e1e;
+  color: #fff;
+}
+.dark-mode .navbar,
+.dark-mode .sidebar {
+  background-color: #1a1a1a;
+}
+.dark-mode .btn-outline-light {
+  border-color: #aaa;
+}
+/* Light Theme */
+.light-mode {
+  background-color: #ffffff;
+  color: #000;
+}
+.light-mode .card {
+  background-color: #f8f9fa;
+  color: #000;
+}
+.light-mode .navbar,
+.light-mode .sidebar {
+  background-color: #f0f0f0;
+}
+    @media (max-width: 768px) {
+      .sidebar {
+        position: fixed;
+        z-index: 1040;
+      }
+      .main {
+        margin-left: var(--sidebar-width);
+      }
+      .sidebar.collapsed + .main {
+        margin-left: var(--sidebar-collapsed-width);
+      }
+    }
+    .brand-effect {
+    transition: all 0.3s ease;
+    text-decoration: none !important;
+  }
+  .logo-hover {
+    transition: transform 0.3s ease, filter 0.3s ease;
+    border-radius: 4px;
+  }
+  .brand-text {
+    background: linear-gradient(90deg, #3a7bd5, #00d2ff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-shadow: 0 0 8px rgba(0, 210, 255, 0.3);
+  }
+  /* Hover effects */
+  .brand-effect:hover {
+    transform: translateY(-2px);
+  }
+  .brand-effect:hover .logo-hover {
+    transform: scale(1.05);
+    filter: drop-shadow(0 0 6px rgba(58, 123, 213, 0.5));
+  }
+  .brand-effect:hover .brand-text {
+    background: linear-gradient(90deg, #ff416c, #ff4b2b);
+    text-shadow: 0 0 10px rgba(255, 75, 43, 0.4);
+  }
+  /* Animation for attention */
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+  }
+  .brand-effect {
+    animation: pulse 3s infinite;
+  }
+  </style>
+</head>
+<body >
+<div class="wrapper ">
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg">
+    <div class="container-fluid">
+      <a class="navbar-brand d-flex align-items-center brand-effect" href="#">
+        <img src="C:\Users\coniasoft\Pictures\profile pic/mw.jpg" width=65px height=45px alt="Logo" class="me-2 logo-hover">
+    <span class="brand-text">Maven Woods</span>
+      </a>
+      <!-- Language Selector -->
+      <select class="ms-auto d-flex align-items-left" id="languageSelect">
+        <option value="en">English</option>
+        <option value="es">Spanish</option>
+        <option value="fr">French</option>
+        <option value="de">German</option>
+    </select>
+      <!-- Searchbar -->
+      <div class="ms-auto d-flex align-items-center">
+        <form class="d-none d-md-flex me-3">
+          <input class="form-control" type="search" placeholder="Search..." aria-label="Search">
+        </form>
+        <!-- Notification -->
+        <div class="dropdown">
+          <button class="btn btn-light me-3 position-relative" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-bell"></i>
+            <span id="notificationBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">0</span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end p-2" style="width: 300px;" id="notificationList">
+            <li class="text-center small text-muted">New notifications from Ali</li>
+            <li class="text-center small text-muted">Your report is ready</li>
+            <li class="text-center small text-muted">New comment on your post</li>
+          </ul>
+        </div>
+        <div class="dropdown">
+          <button class="btn btn-light dropdown-toggle d-flex align-items-center" type="button" data-bs-toggle="dropdown">
+            <img src="C:/Users/coniasoft/Pictures/IMG-20250217-WA0073.jpg" width=30px height=30px class="rounded-circle me-2" alt="Profile"> Admin
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="#">Profile</a></li>
+            <li><a class="dropdown-item" href="#">Settings</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item text-danger" href="#">Logout</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </nav>
+  <!-- Content Area -->
+  <div class="content ">
+      <!-- Sidebar -->
+      <nav id="sidebar" class="sidebar p-3">
+        <div class="toggle-btn" id="sidebarToggle">
+          <!-- <i class="bi bi-bluesky"></i> -->
+          <i class="fa-solid fa-eye"></i>
+        </div>
+        <!--<button class="btn btn-outline-light w-100 theme-toggle" onclick="toggleTheme()">🌗 Switch Theme</button>-->
+      <!-- Dark/Light Mode Toggle -->
+      <button id="themeToggle" class="btn btn-light">
+        <i class="fas fa-sun"></i> <!-- Sun icon for light mode -->
+      </button>
+        <ul class="nav flex-column">
+          <li class="nav-item"><a href="#" class="nav-link text-white"><i class="bi bi-house-door"></i><span> Dashboard</span></a></li>
+          <li class="nav-item"><a href="#" class="nav-link text-white"><i class="bi bi-bar-chart"></i><span> Sales</span></a></li>
+          <li class="nav-item"><a href="#" class="nav-link text-white"><i class="bi bi-cart"></i><span> Purchase</span></a></li>
+          <li class="nav-item"><a href="#" class="nav-link text-white"><i class="bi bi-graph-up"></i><span> Reports</span></a></li>
+          <li class="nav-item"><a href="#" class="nav-link text-white"><i class="bi bi-box-seam"></i><span> Inventory</span></a></li>
+          <li class="nav-item"><a href="#" class="nav-link text-white"><i class="bi bi-calendar"></i><span> Calendar</span></a></li>
+        </ul>
+        <ul class="nav flex-column nav-bottom">
+          <li class="nav-item"><a href="#" class="nav-link text-white"><i class="bi bi-gear"></i><span> Settings</span></a></li>
+        </ul>
+      </nav>
+    <!-- Main Dashboard Area -->
+    <main class="main">
+      <h1>My Dashboard</h1>
+      <div class="container-fluid">
+<!-- Breadcrumb Navigation -->
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="#">Dashboard</a></li>
+      <li class="breadcrumb-item"><a href="#">Sales</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Current Sales</li>
+  </ol>
+</nav>
+        <div class="card p-3 mb-4">
+          <h5>Dashboard Widgets Area</h5>
+          <br><hr>
+        <!-- Charts Cards -->
+        <div class="row g-2 mb-3">      
+          <div class="col-md-3">
+            <div class="kpi-card">
+              <p class="card-title">Inventory</p>
+              <h4 class="card-text">1,200 Units</h4>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="kpi-card">
+              <p class="card-title">Sales</p>
+              <h4 class="card-text">$50,000</h4>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="kpi-card">
+              <p class="card-title">Purchase</p>
+              <h4 class="card-text">$30,000</h4>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="kpi-card">
+              <p class="card-title">Banks</p>
+              <h4 class="card-text">$20,000</h4>
+            </div>
+          </div>
+        </div>
+     <!-- Inventory, Sales, and Profit Charts -->
+     <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <div class="card p-3">
+          <h5 class="mb-3">Inventory Overview</h5>
+          <div class="chart-container">
+            <canvas id="inventoryChart"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card p-3">
+          <h5 class="mb-3">Sales Overview</h5>
+          <div class="chart-container">
+            <canvas id="salesChart"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card p-3">
+          <h5 class="mb-3">Profit & Loss Overview</h5>
+          <div class="chart-container">
+            <canvas id="profitLossChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+   <!-- Recent Activity Timeline -->
+   <div class="card p-3 mb-4">
+    <h5 class="mb-3">Activity Feed</h5>
+    <ul class="list-unstyled">
+      <li class="d-flex align-items-start mb-3">
+        <div class="me-3"><i class="bi bi-cash-coin text-success fs-4"></i></div>
+        <div><div>You received a payment from <strong>John Doe</strong>.</div><small class="text-muted">2 hours ago</small></div>
+      </li>
+      <li class="d-flex align-items-start mb-3">
+        <div class="me-3"><i class="bi bi-bag-check text-primary fs-4"></i></div>
+        <div><div>New order placed by <strong>Sarah Johnson</strong>.</div><small class="text-muted">5 hours ago</small></div>
+      </li>
+      <li class="d-flex align-items-start mb-3">
+        <div class="me-3"><i class="bi bi-person-plus text-warning fs-4"></i></div>
+        <div><div>New customer <strong>Robert Brown</strong> registered.</div><small class="text-muted">1 day ago</small></div>
+      </li>
+      <li class="d-flex align-items-start">
+        <div class="me-3"><i class="bi bi-envelope-check text-info fs-4"></i></div>
+        <div><div>Invoice <strong>#INV-005</strong> sent to <strong>David Lee</strong>.</div><small class="text-muted">2 days ago</small></div>
+      </li>
+    </ul>
+  </div>
+        <!-- Bank Overview Section -->
+        <div class="card p-3 mb-4">
+          <h5 class="mb-3">Bank Overview</h5>
+          <div class="chart-container">
+            <canvas id="bankChart"></canvas>
+          </div>
+        </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <p class="mb-0">© 2025 Company Name. All Rights Reserved.</p>
+    </div>
+  </footer>
+</div>
+  <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+    <script>
+      // Toggle Sidebar Collapse
+      document.getElementById("sidebarToggle").addEventListener("click", function() {
+        document.getElementById("sidebar").classList.toggle("collapsed");
+      });
+      // Chart.js for Bank Overview
+      const bankChart = new Chart(document.getElementById('bankChart'), {
+        type: 'line',
+        data: {
+          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+          datasets: [{
+            label: 'Bank Balance',
+            data: [20000, 25000, 22000, 24000, 23000, 27000],
+            borderColor: '#007bff',
+            fill: false
+          }]
+        }
+      });
+      // Chart.js for Inventory Overview
+      const inventoryChart = new Chart(document.getElementById('inventoryChart'), {
+        type: 'bar',
+        data: {
+          labels: ['Product A', 'Product B', 'Product C', 'Product D'],
+          datasets: [{
+            label: 'Inventory Stock',
+            data: [150, 250, 320, 400],
+            backgroundColor: '#28a745',
+            borderColor: '#28a745',
+            borderWidth: 1
+          }]
+        }
+      });
+      // Chart.js for Sales Overview
+      const salesChart = new Chart(document.getElementById('salesChart'), {
+        type: 'pie',
+        data: {
+          labels: ['Product A', 'Product B', 'Product C'],
+          datasets: [{
+            data: [40, 30, 30],
+            backgroundColor: ['#007bff', '#ffc107', '#28a745']
+          }]
+        }
+      });
+      // Chart.js for Profit & Loss Overview
+      const profitLossChart = new Chart(document.getElementById('profitLossChart'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Profit', 'Loss'],
+          datasets: [{
+            data: [70, 30],
+            backgroundColor: ['#28a745', '#dc3545']
+          }]
+        }
+      });
+      // Dark/Light Theme Toggle with Dynamic Icons
+      document.getElementById('themeToggle').addEventListener('click', function () {
+        let body = document.querySelector('html');
+        let icon = this.querySelector('i');
+        if (body.getAttribute('data-bs-theme') === 'light') {
+          body.setAttribute('data-bs-theme', 'dark');
+          icon.classList.remove('fa-sun');
+          icon.classList.add('fa-moon');
+        } else {
+          body.setAttribute('data-bs-theme', 'light');
+          icon.classList.remove('fa-moon');
+          icon.classList.add('fa-sun');
+        }
+      });
+      // Dark/Light Theme Toggle
+      function toggleTheme() {
+        let body = document.querySelector('html');
+        if (body.getAttribute('data-bs-theme') === 'light') {
+          body.setAttribute('data-bs-theme', 'dark');
+        } else {
+          body.setAttribute('data-bs-theme', 'light');
+        }
+      }
+    </script>
+</body>
+</html>
